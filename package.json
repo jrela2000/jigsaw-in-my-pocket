@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "test": "jest",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "export:web": "EXPO_BASE_URL=/jigsaw-in-my-pocket expo export --platform web --output-dir dist"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

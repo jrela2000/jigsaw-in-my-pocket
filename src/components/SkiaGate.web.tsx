@@ -11,5 +11,5 @@ export const SkiaFallback = () => (
 
 export function SkiaGate<P extends object>({ load, props }: { load: () => Promise<{ default: ComponentType<P> }>; props: P }) {
   const Any = WithSkiaWeb as unknown as ComponentType<any>;
-  return <Any getComponent={load} componentProps={props} fallback={<SkiaFallback />} opts={{ locateFile: (file: string) => `/${file}` }} />;
+  return <Any getComponent={load} componentProps={props} fallback={<SkiaFallback />} opts={{ locateFile: (file: string) => `${process.env.EXPO_BASE_URL ?? ''}/${file}` }} />;
 }

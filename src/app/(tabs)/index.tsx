@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Platform, Pressable, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { Picture } from '../../components/Picture';
 import { LinearGradientFallback } from '../../components/Scrim';
@@ -152,6 +152,7 @@ export default function Gallery() {
         })
       )}
       {puzzles.length > 0 ? <T v="small" center>Press and hold a puzzle to remove it.</T> : null}
+      {Platform.OS === 'web' ? <T v="small" center>Web demo. Haptics, subscriptions and print ordering are in the iPhone and Android apps.</T> : null}
     </Screen>
   );
 }

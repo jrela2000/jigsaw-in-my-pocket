@@ -60,7 +60,8 @@ const config: ExpoConfig = {
     ['react-native-google-mobile-ads', { androidAppId: ADMOB_ANDROID_APP_ID, iosAppId: ADMOB_IOS_APP_ID, delayAppMeasurementInit: true, skAdNetworkItems: ['cstr6suwn9.skadnetwork'] }],
     ['@stripe/stripe-react-native', { merchantIdentifier: process.env.APPLE_MERCHANT_ID ?? 'merchant.com.jigsawinmypocket.app', enableGooglePay: true }],
   ],
-  experiments: { typedRoutes: false },
+  // EXPO_BASE_URL is set only for the hosted web demo, which lives under a sub-path.
+  experiments: { typedRoutes: false, baseUrl: process.env.EXPO_BASE_URL || undefined },
   extra: { eas: { projectId: process.env.EAS_PROJECT_ID } },
 };
 
