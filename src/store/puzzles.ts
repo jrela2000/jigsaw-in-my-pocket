@@ -4,7 +4,7 @@ import { readJson, writeJson } from '../lib/json';
 import type { PuzzleState } from '../engine/state';
 import type { TextureId } from '../theme';
 
-export type PuzzleKind = 'photo' | 'collage' | 'daily' | 'gift';
+export type PuzzleKind = 'photo' | 'collage' | 'daily';
 
 export type PuzzleMeta = {
   id: string;
@@ -34,10 +34,6 @@ export type PuzzleMeta = {
   completedAt: number | null;
   credit?: string;
   dailyDate?: string;
-  giftToken?: string;
-  giftFrom?: string;
-  /** Sender prepaid the physical puzzle; the recipient only supplies an address. */
-  giftPrepaid?: boolean;
 };
 
 type PuzzleStore = {

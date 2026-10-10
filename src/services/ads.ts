@@ -1,13 +1,10 @@
-import { Platform } from 'react-native';
 import mobileAds, {
   AdEventType, AdsConsent, AdsConsentPrivacyOptionsRequirementStatus, InterstitialAd, MaxAdContentRating,
   RewardedAd, RewardedAdEventType, TestIds,
 } from 'react-native-google-mobile-ads';
-import { getTrackingPermissionsAsync, requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import { env } from '../config/env';
 import { getIsPro } from '../store/entitlement';
 import { isUnder13, useSettings } from '../store/settings';
-import { syncProfile } from './supabase';
 
 // Development builds always use Google's test units; real IDs only come from production env vars.
 const rewardedId = __DEV__ || !env.admobRewardedId ? TestIds.REWARDED : env.admobRewardedId;
@@ -18,11 +15,12 @@ const MIN_AD_GAP_MS = 3 * 60 * 1000;
 
 let initialized = false;
 let initializing: Promise<boolean> | null = null;
-let nonPersonalized = true;
+// We never ask to track and never request personalised ads, for anyone.
+const nonPersonalized = true;
 
 /**
- * Consent first (Google UMP, then Apple ATT), then the SDK. Never runs for Pro members,
- * so the ad SDK is not even initialized for them.
+ * Consent first (Google UMP), then the SDK. Ads are always non-personalised and the app never
+ * shows Apple's tracking prompt. Never runs for Pro members, so the ad SDK is not even initialized for them.
  */
 export function initAds(): Promise<boolean> {
   if (getIsPro()) return Promise.resolve(false);
@@ -31,13 +29,6 @@ export function initAds(): Promise<boolean> {
     try {
       const child = isUnder13(useSettings.getState().birthYear);
       const consent = await AdsConsent.gatherConsent({ tagForUnderAgeOfConsent: child }).catch(() => AdsConsent.getConsentInfo());
-      let att = 'unavailable';
-      if (Platform.OS === 'ios' && !child) {
-        const current = await getTrackingPermissionsAsync();
-        att = current.canAskAgain && !current.granted ? (await requestTrackingPermissionsAsync()).status : current.status;
-      }
-      nonPersonalized = child || (Platform.OS === 'ios' && att !== 'granted');
-      void syncProfile({ ump_consent_status: String(consent.status).toLowerCase(), att_status: att });
       if (!consent.canRequestAds) return false;
       await mobileAds().setRequestConfiguration({
         tagForChildDirectedTreatment: child,
@@ -114,16 +105,10 @@ export async function openConsentOptions(): Promise<string> {
       await AdsConsent.showPrivacyOptionsForm();
       return 'Your ad choices have been updated.';
     }
-    return 'No consent choices are required in your region. Ads are not personalized unless you allow tracking.';
+    return 'No consent choices are required in your region. Ads in this app are never personalised.';
   } catch {
     return 'Consent options are not available right now.';
   }
-}
-
-export async function trackingStatus(): Promise<string> {
-  if (Platform.OS !== 'ios') return 'Not applicable';
-  const { status } = await getTrackingPermissionsAsync();
-  return status === 'granted' ? 'Allowed' : status === 'denied' ? 'Opted out' : 'Not asked yet';
 }
 
 export const adsAvailable = true;

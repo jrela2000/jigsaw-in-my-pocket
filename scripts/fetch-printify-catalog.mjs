@@ -11,7 +11,7 @@ if (!token) {
   process.exit(1);
 }
 const api = async (path) => {
-  const res = await fetch(`https://api.printify.com/v1${path}`, { headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'StudioJigsaw-setup' } });
+  const res = await fetch(`https://api.printify.com/v1${path}`, { headers: { Authorization: `Bearer ${token}`, 'User-Agent': 'JigsawInMyPocket-setup' } });
   if (!res.ok) throw new Error(`${path} -> ${res.status} ${await res.text()}`);
   return res.json();
 };

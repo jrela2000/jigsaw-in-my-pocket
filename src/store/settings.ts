@@ -16,7 +16,6 @@ type Persisted = {
   completionsAtLastAd: number;
   lastAdAt: number;
   texture: TextureId;
-  linkedEmail: string | null;
   /** Development-only Pro switch, used when RevenueCat is not configured yet. */
   demoPro: boolean;
 };
@@ -24,7 +23,7 @@ type Persisted = {
 const DEFAULTS: Persisted = {
   onboarded: false, birthYear: null, haptics: true, reminders: false, reminderOffered: false,
   streak: EMPTY_STREAK, hintsLeft: FREE_HINTS, completions: 0, completionsAtLastAd: 0, lastAdAt: 0,
-  texture: 'linen', linkedEmail: null, demoPro: false,
+  texture: 'oak', demoPro: false,
 };
 
 type SettingsStore = Persisted & {

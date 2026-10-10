@@ -1,4 +1,4 @@
-# Studio Jigsaw
+# Jigsaw In My Pocket
 
 Photo jigsaw puzzle app for iOS and Android (Expo SDK 57, React Native, TypeScript). Solve your own photos, a daily public-domain artwork, or a collage; then order the picture as a printed puzzle.
 
@@ -22,17 +22,20 @@ Expo Go cannot run this app (ads, subscriptions and payments need native code); 
 
 | Path | What lives there |
 |---|---|
-| `src/app/` | Screens (Expo Router): age screen, tabs (Gallery, New Puzzle, Daily Art, Orders), puzzle board, completed, paywall, collage, gifting, checkout, settings |
+| `src/app/` | Screens (Expo Router): age screen, tabs (Gallery, New Puzzle, Daily Art, Orders), puzzle board, completed, paywall, collage, checkout, settings |
 | `src/engine/` | Pure puzzle logic: piece shapes, grid sizing, snap/merge rules, print DPI checks (unit-tested) |
 | `src/components/board/` | Skia board: sprite atlas of cut pieces, gestures, tray |
 | `src/services/` | Supabase, RevenueCat, AdMob, Stripe, daily art, notifications. Each degrades gracefully when its keys are missing |
 | `src/store/` | On-device state (SQLite key-value): puzzles, progress, settings, entitlement |
-| `supabase/` | Database schema and Edge Functions (quotes, payments, Printify, webhooks, gifts, cleanup) |
-| `web/` | Static gift-link landing page |
+| `supabase/` | Database schema and Edge Functions (quotes, payments, Printify, webhooks, cleanup) |
 
 ## How the board stays fast
 
 The photo is cut once into a sprite atlas (every piece pre-clipped with its bevel). Each frame draws the whole puzzle with a handful of `drawAtlas` calls whose transforms are computed on the UI thread, so dragging never waits on JavaScript and 1,000 pieces cost about the same as 30. Tray pieces outside the visible strip are culled.
+
+## Privacy
+
+No account and no user database. Photos, progress, streak and birth year stay on the device. The only server-side per-device data is print order status (no name, address or email; Stripe and Printify hold those). The app was built with AI assistance and has no AI features.
 
 ## Secrets
 

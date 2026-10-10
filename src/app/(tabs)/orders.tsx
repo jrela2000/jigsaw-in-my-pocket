@@ -32,15 +32,15 @@ export default function Orders() {
         <View><T v="overline">Printed puzzles</T><T v="headline">My Orders</T></View>
         {error ? <Card tone="low"><T v="body">{error}</T></Card> : null}
         {under13 ? (
-          <Card tone="low"><T v="body">Print ordering is not available for this profile.</T></Card>
+          <Card tone="low"><T v="body">Print ordering is not available on this phone.</T></Card>
         ) : orders && orders.length > 0 ? (
           orders.map((o) => (
             <Card key={o.id} style={{ gap: 8 }}>
               <Row style={{ justifyContent: 'space-between' }}>
-                <T v="titleLg" style={{ flex: 1 }} numberOfLines={1}>{o.title ?? 'Custom puzzle'}</T>
+                <T v="titleLg" style={{ flex: 1 }} numberOfLines={1}>{o.piece_count}-piece puzzle</T>
                 <Chip label={ORDER_STATUS[o.status] ?? o.status} tone={o.status === 'shipped' || o.status === 'delivered' ? 'sage' : o.status === 'failed' || o.status === 'canceled' ? 'warn' : 'linen'} />
               </Row>
-              <T v="body">{o.piece_count} pieces · {formatCents(o.total_amount_cents)} · {new Date(o.created_at).toLocaleDateString()}</T>
+              <T v="body">{formatCents(o.total_amount_cents)} · {new Date(o.created_at).toLocaleDateString()}</T>
               {o.tracking_url ? <Button label={`Track parcel ${o.tracking_number ?? ''}`.trim()} icon="truck-delivery-outline" kind="secondary" size="sm" onPress={() => Linking.openURL(o.tracking_url!)} /> : null}
             </Card>
           ))

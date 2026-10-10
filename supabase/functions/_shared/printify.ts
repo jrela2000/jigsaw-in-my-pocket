@@ -6,7 +6,7 @@ const API = 'https://api.printify.com/v1';
 async function printify(path: string, init?: RequestInit) {
   const res = await fetch(`${API}${path}`, {
     ...init,
-    headers: { Authorization: `Bearer ${env('PRINTIFY_API_TOKEN')}`, 'Content-Type': 'application/json', 'User-Agent': 'StudioJigsaw' },
+    headers: { Authorization: `Bearer ${env('PRINTIFY_API_TOKEN')}`, 'Content-Type': 'application/json', 'User-Agent': 'JigsawInMyPocket' },
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`Printify ${res.status}: ${text.slice(0, 400)}`);
@@ -31,20 +31,19 @@ export function costFor(pieces: number): number | undefined {
 
 /** Sends a paid order to Printify: image by signed URL, variant by piece count, then into production. */
 export async function submitToPrintify(db: SupabaseClient, order: {
-  id: string; piece_count: number; storage_upload_path: string; shipping_tier: string; shipping_address: Address;
-}) {
+  id: string; piece_count: number; storage_upload_path: string; shipping_tier: string;
+}, a: Address) {
   const signed = await db.storage.from('print_uploads').createSignedUrl(order.storage_upload_path, 60 * 60 * 24);
   if (signed.error || !signed.data) throw new Error(`Could not sign print image: ${signed.error?.message}`);
   const upload = await printify('/uploads/images.json', { method: 'POST', body: JSON.stringify({ file_name: `${order.id}.jpg`, url: signed.data.signedUrl }) });
 
-  const a = order.shipping_address;
   const [first, ...rest] = a.name.split(' ');
   const shop = env('PRINTIFY_SHOP_ID');
   const created = await printify(`/shops/${shop}/orders.json`, {
     method: 'POST',
     body: JSON.stringify({
       external_id: order.id,
-      label: `SJ-${order.id.slice(0, 8)}`,
+      label: `JP-${order.id.slice(0, 8)}`,
       line_items: [{
         print_provider_id: Number(env('PRINTIFY_PROVIDER_ID')),
         blueprint_id: Number(env('PRINTIFY_BLUEPRINT_ID')),

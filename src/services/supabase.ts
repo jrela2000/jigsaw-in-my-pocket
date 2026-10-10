@@ -42,29 +42,7 @@ export function ensureSession(): Promise<string | null> {
 
 export const currentUserId = () => userId;
 
-export async function syncProfile(patch: { birth_year?: number; ump_consent_status?: string; att_status?: string }) {
-  const id = await ensureSession();
-  if (!supabase || !id) return;
-  const { error } = await supabase.from('profiles').upsert({ id, ...patch, updated_at: new Date().toISOString() });
-  if (error) console.warn('[supabase] profile sync failed', error.message);
-}
-
-/** Attaches an email to the anonymous account so purchases and orders can be recovered on another device. */
-export async function linkEmail(email: string): Promise<{ ok: boolean; message: string }> {
-  const id = await ensureSession();
-  if (!supabase || !id) return { ok: false, message: 'Cloud sync is not available right now.' };
-  const { error } = await supabase.auth.updateUser({ email });
-  return error ? { ok: false, message: error.message } : { ok: true, message: 'Check your inbox to confirm your email.' };
-}
-
-export async function recordUnlock(puzzleId: string, pieces: number) {
-  const id = await ensureSession();
-  if (!supabase || !id) return;
-  await supabase.from('unlocks').insert({ user_id: id, puzzle_id: puzzleId, unlocked_piece_count: pieces });
-}
-
-export async function consumeUnlock(puzzleId: string) {
-  const id = await ensureSession();
-  if (!supabase || !id) return;
-  await supabase.from('unlocks').update({ used: true }).eq('user_id', id).eq('puzzle_id', puzzleId);
-}
+/** Forgets the cached identity after the cloud data has been erased. */
+export const forgetSession = () => {
+  userId = null;
+};

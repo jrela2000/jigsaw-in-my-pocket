@@ -127,26 +127,29 @@ export default function Gallery() {
 
       <SectionTitle title="Completed Archive" sub={printsAllowed ? 'Finished puzzles, ready to order as prints' : 'Your finished puzzles'} right={<T v="label">{finished.length} Total</T>} />
       {finished.length === 0 ? (
-        <Card tone="low"><T v="body">Finished puzzles appear here{printsAllowed ? ', where you can order the real thing or send one as a gift' : ''}.</T></Card>
+        <Card tone="low"><T v="body">Finished puzzles appear here{printsAllowed ? ', where you can order the real thing' : ''}.</T></Card>
       ) : (
-        finished.map((p) => (
-          <Pressable key={p.id} onPress={() => router.push(`/completed/${p.id}`)} onLongPress={() => discard(p)} accessibilityRole="button" accessibilityLabel={`Open ${p.title}`}>
-            <Card style={{ padding: 12, gap: 10 }}>
-              <View style={{ height: 170, borderRadius: radius.base, overflow: 'hidden', backgroundColor: colors.surfaceDim }}>
-                <Picture uri={p.imageUri} style={{ flex: 1 }} />
-                <Chip label={`Completed in ${formatDuration(p.elapsedMs)}`} icon="check-circle-outline" tone="white" style={{ position: 'absolute', top: 8, right: 8 }} />
-              </View>
+        finished.map((p) => {
+          // The card itself is not a button: the picture and title open the puzzle, Print sits beside them.
+          const open = { onPress: () => router.push(`/completed/${p.id}`), onLongPress: () => discard(p) };
+          return (
+            <Card key={p.id} style={{ padding: 12, gap: 10 }}>
+              <Pressable {...open} accessibilityRole="button" accessibilityLabel={`Open ${p.title}`}>
+                <View style={{ height: 170, borderRadius: radius.base, overflow: 'hidden', backgroundColor: colors.surfaceDim }}>
+                  <Picture uri={p.imageUri} style={{ flex: 1 }} />
+                  <Chip label={`Completed in ${formatDuration(p.elapsedMs)}`} icon="check-circle-outline" tone="white" style={{ position: 'absolute', top: 8, right: 8 }} />
+                </View>
+              </Pressable>
               <Row style={{ justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}>
+                <Pressable {...open} accessible={false} style={{ flex: 1 }}>
                   <T v="titleLg" numberOfLines={1}>{p.title}</T>
                   <T v="small">{p.pieces} Pieces{p.credit ? ` • ${p.credit}` : ''}</T>
-                </View>
-                <Button label="Gift" icon="gift-outline" kind="tonal" size="sm" onPress={() => router.push(`/send-gift/${p.id}`)} />
+                </Pressable>
                 {printsAllowed ? <Button label="Print" icon="printer-outline" kind="linen" size="sm" onPress={() => router.push(`/checkout/${p.id}`)} /> : null}
               </Row>
             </Card>
-          </Pressable>
-        ))
+          );
+        })
       )}
       {puzzles.length > 0 ? <T v="small" center>Press and hold a puzzle to remove it.</T> : null}
     </Screen>

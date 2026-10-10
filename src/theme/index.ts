@@ -66,11 +66,12 @@ export const shadow: Record<'card' | 'float', ViewStyle> = {
   })!,
 };
 
+// Wood is the default surface; the others are there for anyone who prefers them.
 export const BOARD_TEXTURES = [
   { id: 'paper', name: 'Paper', color: '#f6f5f1', dark: false },
   { id: 'linen', name: 'Linen', color: '#ebe4d6', dark: false },
   { id: 'slate', name: 'Slate', color: '#2b303b', dark: true },
-  { id: 'oak', name: 'Oak', color: '#c4a47c', dark: false },
+  { id: 'oak', name: 'Wood', color: '#b98f5f', dark: false },
   { id: 'felt', name: 'Felt', color: '#2f5241', dark: true },
 ] as const;
 export type TextureId = (typeof BOARD_TEXTURES)[number]['id'];

@@ -11,12 +11,12 @@ Everything the app needs from you. The app already runs without any of this (pho
 |---|---|
 | ⬜ 1. Expo / EAS | Building the iOS and Android apps |
 | ⬜ 2. Apple + Google developer accounts | Installing on phones, store release |
-| ⬜ 3. Supabase | Anonymous identity, daily art schedule, gifts, orders |
+| ⬜ 3. Supabase | Daily art schedule, print order status |
 | ⬜ 4. RevenueCat | Pro subscription |
 | ⬜ 5. AdMob | Ads on the free tier |
 | ⬜ 6. Stripe | Paying for printed puzzles |
 | ⬜ 7. Printify | Printing and shipping |
-| ⬜ 8. Website + legal pages | Gift links, Terms, Privacy |
+| ⬜ 8. Website + legal pages | Web demo, Terms, Privacy |
 
 ---
 
@@ -25,7 +25,7 @@ Everything the app needs from you. The app already runs without any of this (pho
 - [ ] Create a free account at https://expo.dev.
 - [ ] In this folder run `npx eas-cli login`, then `npx eas-cli init`. It prints a project ID.
 - [ ] Save it: `npx eas-cli env:create --name EAS_PROJECT_ID --value <id> --environment production --environment preview --environment development --visibility plaintext`.
-- [ ] Decide the final app identifiers. The placeholders are `com.studiojigsaw.app` (both platforms). To change them set `IOS_BUNDLE_ID` and `ANDROID_PACKAGE` as EAS env vars **before the first store build**; they cannot change after release.
+- [ ] Decide the final app identifiers. The placeholders are `com.jigsawinmypocket.app` (both platforms). To change them set `IOS_BUNDLE_ID` and `ANDROID_PACKAGE` as EAS env vars **before the first store build**; they cannot change after release.
 
 Build commands (all run in the cloud; no Mac needed):
 
@@ -47,7 +47,7 @@ npx eas-cli submit --profile production --platform all   # upload to TestFlight 
 - [ ] Create a project at https://supabase.com. From Project Settings → API copy:
   - `EXPO_PUBLIC_SUPABASE_URL` (app value)
   - `EXPO_PUBLIC_SUPABASE_ANON_KEY` (app value)
-- [ ] Authentication → Sign In / Providers → turn on **Allow anonymous sign-ins**. Turn on **Email** too (used only for the optional "save across devices" link).
+- [ ] Authentication → Sign In / Providers → turn on **Allow anonymous sign-ins**. Leave every other provider off: the app has no sign-up, and the anonymous ID only ties a phone to its own print orders.
 - [ ] Install the CLI and connect: `npx supabase login`, `npx supabase link --project-ref <ref>`.
 - [ ] Create the tables and storage buckets: `npx supabase db push`.
 - [ ] Deploy the functions: `npx supabase functions deploy`.
@@ -65,12 +65,12 @@ select cron.schedule('cleanup-storage', '30 4 * * *', $$
 
 - [ ] Run the seed once now so the first 60 days exist: the same `net.http_post` for `seed-daily-puzzles`, on its own.
 
-Note: the schema differs from the original spec in three deliberate ways. (1) `profiles.is_under_13` is a function, not a generated column, because Postgres does not allow generated columns that depend on today's date. (2) Gifts are **not** publicly readable; recipients go through the `get-gift` function with the unguessable token, so nobody can list other people's gift names and notes. (3) Print orders can only be written by the server.
+Note: there is deliberately no user database. The only tables are `daily_puzzles` (museum art, no user data) and `print_orders` (status, piece count, tracking, price). Names, addresses and emails go straight to Stripe and Printify and are never stored in Supabase. Under-13 print blocking is enforced in the app only, because birth year never leaves the phone.
 
 ## 4. RevenueCat (Pro subscription)
 
 - [ ] Create the subscriptions in the stores first:
-  - App Store Connect → Subscriptions: group "Studio Jigsaw Pro", products `pro_monthly` ($3.99/month) and `pro_yearly` ($24.99/year). Optional 7-day free trial as an introductory offer on either; the paywall button says "Start 7-Day Free Trial" only when the store really offers one.
+  - App Store Connect → Subscriptions: group "Jigsaw In My Pocket Pro", products `pro_monthly` ($3.99/month) and `pro_yearly` ($24.99/year). Optional 7-day free trial as an introductory offer on either; the paywall button says "Start 7-Day Free Trial" only when the store really offers one.
   - Play Console → Monetize → Subscriptions: `pro_monthly` and `pro_yearly` with the same prices.
 - [ ] Create a project at https://app.revenuecat.com, add the iOS and Android apps, connect the store credentials it asks for.
 - [ ] Entitlement: `pro`. Attach both products. Offering: default, with a Monthly and an Annual package.
@@ -80,12 +80,12 @@ Note: the schema differs from the original spec in three deliberate ways. (1) `p
 
 ## 5. AdMob (free-tier ads)
 
-Development builds always use Google's test ads. Real ads appear only in production builds with the IDs below.
+Development builds always use Google's test ads. Real ads appear only in production builds with the IDs below. Ads are always non-personalised and the app never shows Apple's tracking prompt.
 
 - [ ] Create an account at https://admob.google.com and add two apps (iOS, Android).
 - [ ] App IDs (contain `~`) → EAS env vars `ADMOB_IOS_APP_ID` and `ADMOB_ANDROID_APP_ID`.
 - [ ] Create one **Rewarded** and one **Interstitial** unit per platform → app values `EXPO_PUBLIC_ADMOB_IOS_REWARDED_ID`, `EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_ID`, `EXPO_PUBLIC_ADMOB_ANDROID_REWARDED_ID`, `EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_ID`.
-- [ ] AdMob → Privacy & messaging: create and publish the **GDPR** message and the **US states** message (this is the Google UMP consent form the app shows), and the **IDFA explainer** for iOS.
+- [ ] AdMob → Privacy & messaging: create and publish the **GDPR** message and the **US states** message (this is the Google UMP consent form the app shows). Do **not** enable the IDFA / tracking message: the app does not ask to track.
 - [ ] AdMob → Blocking controls: set the maximum ad content rating to PG or lower to suit a 13+ audience.
 
 ## 6. Stripe (print payments)
@@ -94,7 +94,7 @@ Development builds always use Google's test ads. Real ads appear only in product
 - [ ] App value: `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` (`pk_test_...` while testing, `pk_live_...` for release).
 - [ ] Secret: `npx supabase secrets set STRIPE_SECRET_KEY=sk_...`.
 - [ ] Developers → Webhooks → add endpoint `https://<ref>.supabase.co/functions/v1/create-print-order`, event `payment_intent.succeeded`. Copy the signing secret: `npx supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...`.
-- [ ] Apple Pay: in the Apple Developer portal create merchant ID `merchant.com.studiojigsaw.app` (or your own, then set EAS env var `APPLE_MERCHANT_ID` and update `src/services/payments.tsx`), and add it in Stripe → Settings → Payment methods → Apple Pay.
+- [ ] Apple Pay: in the Apple Developer portal create merchant ID `merchant.com.jigsawinmypocket.app` (or your own, then set EAS env var `APPLE_MERCHANT_ID` and update `src/services/payments.tsx`), and add it in Stripe → Settings → Payment methods → Apple Pay.
 - [ ] Sales tax: the app currently applies one estimated rate (8.5%, `taxRate` in `supabase/functions/_shared/pricing.ts`). **Talk to an accountant** about where you must collect tax; Stripe Tax can replace the flat rate.
 
 ## 7. Printify (printing and shipping)
@@ -115,16 +115,13 @@ npx supabase secrets set PRINTIFY_SHOP_ID=... PRINTIFY_BLUEPRINT_ID=... PRINTIFY
 
 **Known limitations to decide on**
 
-- **Box text and gift message are switched off.** Printify's standard puzzle does not print custom lid text or include a message card, so the checkout does not offer them (`PRINT_PERSONALIZATION = false` in `src/config/env.ts`). The fields are stored with the order if you turn the flag on, but nothing prints them yet.
+- **No box text or gift message.** Printify's standard puzzle does not print custom lid text or include a message card, so the checkout does not offer them.
 - **Express shipping** is offered at $12.99 and maps to Printify shipping method 2. Confirm your provider supports it for puzzles; if not, remove the `express` tier in `src/app/checkout/[id].tsx`.
 - **The design mockups promised things Printify does not make** (wooden pieces, magnetic gift box, velvet bag, foil stamping, a 30-day warranty). The app's wording describes the real product instead. Change it in `src/app/completed/[id].tsx` if your provider offers more.
 - If Printify rejects an order after payment, the order is marked "Needs attention" and you must refund or resubmit it by hand (Stripe dashboard / Printify dashboard). There is no automatic refund.
 
 ## 8. Website and legal pages
 
-- [ ] Register the domain used for gift links (placeholder: `studiojigsaw.app`) and host the `web/` folder there (see `web/README.md`). If you use a different domain, change it in `app.config.ts` (two places) and set `EXPO_PUBLIC_GIFT_BASE_URL`.
-- [ ] `web/.well-known/apple-app-site-association`: replace `REPLACE_TEAM_ID` with your Apple Team ID.
-- [ ] `web/.well-known/assetlinks.json`: replace the fingerprint with the SHA-256 from Play Console → Setup → App signing.
-- [ ] `web/gift/index.html`: replace the App Store link once the app has an ID.
+- [ ] Publish the web demo: `npx expo export --platform web` produces a static `dist/` folder to upload under the Projects section of jarrodqsimpson.com.
 - [ ] Publish a Terms of Service and a Privacy Policy and set `EXPO_PUBLIC_TERMS_URL` and `EXPO_PUBLIC_PRIVACY_URL`. The in-app screens show a short summary and link to these. **Have a lawyer review them**; the privacy policy must cover AdMob, RevenueCat, Stripe, Printify and Supabase.
 - [ ] Set up a support email address; both stores require one.

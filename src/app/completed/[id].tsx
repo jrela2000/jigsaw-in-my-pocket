@@ -53,7 +53,6 @@ export default function Completed() {
   const total = meta.cols * meta.rows;
   const q = quote(meta.pieces, isPro);
   const quality = printQuality(meta);
-  const canPrint = !under13 && quality.grade !== 'blocked';
 
   return (
     <Screen bar={<AppBar title="Completed" back />}>
@@ -116,15 +115,12 @@ export default function Completed() {
           ) : (
             <Button label="Customize & Order Print" icon="shopping-outline" size="lg" onPress={() => router.push(`/checkout/${meta.id}`)} />
           )}
-          {meta.giftPrepaid && canPrint ? <Notice icon="gift-outline" title="This print is already paid for" body={`${meta.giftFrom ?? 'The sender'} prepaid the printed puzzle. You only need to tell us where to send it.`} /> : null}
         </Card>
       ) : null}
 
-      <Row gap={10}>
-        <Button label="Send as Gift" icon="gift-outline" kind="secondary" style={{ flex: 1 }} onPress={() => router.push(`/send-gift/${meta.id}`)} />
-        <Button label="Share" icon="share-variant-outline" kind="secondary" style={{ flex: 1 }}
-          onPress={() => Share.share({ message: `I just finished "${meta.title}" — a ${meta.pieces}-piece puzzle in ${formatDuration(meta.elapsedMs)} on Studio Jigsaw.` }).catch(() => {})} />
-      </Row>
+      {/* Shares the time and piece count only, never the photo. */}
+      <Button label="Share My Time" icon="share-variant-outline" kind="secondary"
+        onPress={() => Share.share({ message: `I just finished a ${meta.pieces}-piece puzzle in ${formatDuration(meta.elapsedMs)} on Jigsaw In My Pocket.` }).catch(() => {})} />
       <Button label="Back to Gallery" kind="ghost" onPress={() => router.replace('/')} />
     </Screen>
   );

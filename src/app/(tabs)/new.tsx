@@ -11,8 +11,8 @@ import { aspectFor, createPuzzle, Framing, useDraft } from '../../lib/createPuzz
 import { useIsPro } from '../../store/entitlement';
 import { useSettings } from '../../store/settings';
 import { showRewarded } from '../../services/ads';
-import { recordUnlock } from '../../services/supabase';
 import { notify } from '../../lib/dialog';
+import { haptic } from '../../lib/haptics';
 
 const FRAMINGS: { id: Framing; label: string }[] = [
   { id: 'print', label: 'Print fit' }, { id: '4:3', label: '4:3' }, { id: '16:9', label: '16:9' }, { id: '1:1', label: '1:1' },
@@ -54,7 +54,6 @@ export default function NewPuzzle() {
         }
       }
       const meta = await createPuzzle({ ...draft, pieces, framing: frame, rotation, texture });
-      if (viaAd) void recordUnlock(meta.id, pieces);
       useSettings.getState().set({ texture });
       setDraft(null);
       router.push(`/puzzle/${meta.id}`);
@@ -80,7 +79,7 @@ export default function NewPuzzle() {
           </Card>
         </Pressable>
         <Button label="Make a collage instead" icon="view-grid-plus-outline" kind="secondary" onPress={() => router.push('/collage')} />
-        <Notice icon="shield-lock-outline" title="Your photos stay on this device" body="A photo is only uploaded if you later choose to gift the puzzle or order a print, and we ask first." />
+        <Notice icon="shield-lock-outline" title="Your photos stay on this device" body="A photo is only uploaded if you later choose to order it as a print." />
       </Screen>
     );
   }
@@ -97,7 +96,7 @@ export default function NewPuzzle() {
       )
     }>
       <Row style={{ justifyContent: 'space-between' }}>
-        <View style={{ flex: 1 }}><T v="overline">Step 2 of 2 · Studio canvas</T><T v="headline">Curate Board</T></View>
+        <View style={{ flex: 1 }}><T v="overline">Step 2 of 2 · Set up</T><T v="headline">Curate Board</T></View>
         <IconButton name="image-multiple-outline" label="Choose a different photo" onPress={pick} />
       </Row>
 
@@ -135,7 +134,7 @@ export default function NewPuzzle() {
         const on = s.pieces === pieces;
         const free = s.pieces <= FREE_MAX_PIECES;
         return (
-          <Pressable key={s.pieces} onPress={() => setPieces(s.pieces)} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={`${s.pieces} pieces, ${s.label}`}>
+          <Pressable key={s.pieces} onPress={() => { setPieces(s.pieces); haptic.select(); }} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={`${s.pieces} pieces, ${s.label}`}>
             <Row gap={14} style={{ padding: 12, borderRadius: radius.md, backgroundColor: on ? colors.surfaceHigh : colors.surface, borderWidth: 1, borderColor: on ? colors.sage : colors.hairline }}>
               <View style={{ width: 52, height: 52, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? colors.primary : colors.surfaceMid }}>
                 <Text style={{ fontFamily: fonts.sansSemi, fontSize: 17, color: on ? '#fff' : colors.text }}>{s.pieces >= 1000 ? '1k' : s.pieces}</Text>

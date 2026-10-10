@@ -1,6 +1,6 @@
 import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
-import { Atlas, Canvas, Circle, Fill, Group, Image as SkiaImage, Path, Rect, RoundedRect, Shadow, Skia, SkImage, useRectBuffer, useRSXformBuffer } from '@shopify/react-native-skia';
+import { Atlas, Canvas, Circle, ColorMatrix, Fill, FractalNoise, Group, Image as SkiaImage, Path, Rect, RoundedRect, Shadow, Skia, SkImage, useRectBuffer, useRSXformBuffer } from '@shopify/react-native-skia';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS, useDerivedValue, useSharedValue, withDecay, withTiming } from 'react-native-reanimated';
 import { BoardAssets } from './assets';
@@ -14,6 +14,13 @@ export const CHIPS_H = 52;
 const TRAY_CELL = 76;
 const TRAY_PAD = 14;
 const BOARD_PAD = 18;
+// Grey from the noise's average, tinted warm, fully opaque so it can be multiplied over the wood colour.
+const GRAIN = [
+  0.45, 0.45, 0.45, 0, 0.42,
+  0.42, 0.42, 0.42, 0, 0.36,
+  0.36, 0.36, 0.36, 0, 0.28,
+  0, 0, 0, 0, 1,
+];
 
 export type TrayFilter = { kind: 'all' } | { kind: 'edges' } | { kind: 'family'; family: number };
 export type BoardStats = { placed: number; trayAll: number; trayEdges: number; families: { family: number; count: number }[]; zoom: number };
@@ -33,15 +40,18 @@ type Props = {
   image: SkImage;
   initial: PuzzleState;
   background: string;
+  /** Draws a wood grain over the background colour. */
+  wood?: boolean;
   showReference: boolean;
   filter: TrayFilter;
   allowRotate: boolean;
   onStats: (stats: BoardStats) => void;
   onDrop: (e: DropEvent, state: PuzzleState) => void;
+  onPickup?: () => void;
 };
 
 export const PuzzleBoard = forwardRef<PuzzleBoardHandle, Props>(function PuzzleBoard(
-  { assets, image, initial, background, showReference, filter, allowRotate, onStats, onDrop }, ref,
+  { assets, image, initial, background, wood, showReference, filter, allowRotate, onStats, onDrop, onPickup }, ref,
 ) {
   const { geo, atlas, families } = assets;
   const { cols, rows, pw, ph, margin, cellW, cellH, width: W, height: H } = geo;
@@ -213,6 +223,7 @@ export const PuzzleBoard = forwardRef<PuzzleBoardHandle, Props>(function PuzzleB
   }, [allowRotate, camS, pw, ph, cols, rows, settle, push]);
 
   const zoomReport = useCallback((z: number) => publish(z), [publish]);
+  const pickedUp = useCallback(() => onPickup?.(), [onPickup]);
 
   useImperativeHandle(ref, () => ({
     fit: () => fit(true),
@@ -399,6 +410,7 @@ export const PuzzleBoard = forwardRef<PuzzleBoardHandle, Props>(function PuzzleB
         dragX.value = 0;
         dragY.value = 0;
         mode.value = 2;
+        runOnJS(pickedUp)();
       })
       .onChange((e) => {
         if (mode.value === 1) {
@@ -428,6 +440,7 @@ export const PuzzleBoard = forwardRef<PuzzleBoardHandle, Props>(function PuzzleB
             dragX.value = 0;
             dragY.value = 0;
             mode.value = 2;
+            runOnJS(pickedUp)();
           } else if (across > 6) {
             mode.value = 3;
           }
@@ -493,7 +506,7 @@ export const PuzzleBoard = forwardRef<PuzzleBoardHandle, Props>(function PuzzleB
     return Gesture.Simultaneous(pinch, Gesture.Exclusive(pan, tap));
     // Shared values are stable; geometry and callbacks are the real dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cols, pw, ph, margin, W, H, handleDrop, handleTap, zoomReport]);
+  }, [cols, pw, ph, margin, W, H, handleDrop, handleTap, zoomReport, pickedUp]);
 
   const hintPath = hintPiece ? assets.piecePath(hintPiece.piece) : null;
   const hc = hintPiece ? hintPiece.piece % cols : 0, hr = hintPiece ? Math.floor(hintPiece.piece / cols) : 0;
@@ -504,6 +517,19 @@ export const PuzzleBoard = forwardRef<PuzzleBoardHandle, Props>(function PuzzleB
         {size.w > 0 ? (
           <Canvas style={{ flex: 1 }}>
             <Fill color={background} />
+            {wood ? (
+              <>
+                {/* Long, stretched noise reads as grain; a second, finer pass adds pores. Both are desaturated and multiplied in. */}
+                <Rect x={0} y={0} width={size.w} height={size.h} blendMode="multiply" opacity={0.5}>
+                  <FractalNoise freqX={0.0035} freqY={0.07} octaves={4} seed={11} />
+                  <ColorMatrix matrix={GRAIN} />
+                </Rect>
+                <Rect x={0} y={0} width={size.w} height={size.h} blendMode="multiply" opacity={0.22}>
+                  <FractalNoise freqX={0.02} freqY={0.9} octaves={2} seed={3} />
+                  <ColorMatrix matrix={GRAIN} />
+                </Rect>
+              </>
+            ) : null}
             <Group transform={camera}>
               <RoundedRect x={-10} y={-10} width={W + 20} height={H + 20} r={14} color="#ffffff">
                 <Shadow dx={0} dy={6} blur={18} color="rgba(17,24,39,0.16)" />

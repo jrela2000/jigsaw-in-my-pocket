@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Picture } from '../../components/Picture';
-import { AppBar, Button, Card, Chip, Field, Icon, Notice, Row, Screen, T, Toggle } from '../../components/ui';
+import { AppBar, Button, Card, Chip, Field, Icon, Notice, Row, Screen, T } from '../../components/ui';
 import { colors, fonts, radius } from '../../theme';
 import { usePuzzles } from '../../store/puzzles';
 import { useIsPro } from '../../store/entitlement';
 import { isMinor, isUnder13, useSettings } from '../../store/settings';
 import { formatCents, quote as localQuote, Quote, ShippingTier } from '../../../supabase/functions/_shared/pricing';
-import { Address, claimGiftPrint, fetchQuote, startPrintOrder } from '../../services/commerce';
+import { Address, fetchQuote, startPrintOrder } from '../../services/commerce';
 import { pay } from '../../services/payments';
 import { preparePrintImage, printQuality } from '../../lib/print';
-import { configured, PRINT_PERSONALIZATION } from '../../config/env';
+import { configured } from '../../config/env';
 import { readJson, writeJson } from '../../lib/json';
 import { notify } from '../../lib/dialog';
 
@@ -28,14 +28,9 @@ export default function Checkout() {
   const birthYear = useSettings((s) => s.birthYear);
   const [address, setAddress] = useState<Address>(() => readJson('address.v1', EMPTY));
   const [shipping, setShipping] = useState<ShippingTier>('standard');
-  const [boxText, setBoxText] = useState(meta?.title ?? '');
-  const [giftMessage, setGiftMessage] = useState('');
-  const [isGift, setIsGift] = useState(false);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [estimated, setEstimated] = useState(true);
   const [busy, setBusy] = useState(false);
-
-  const claim = !!meta?.giftPrepaid && !!meta.giftToken;
 
   useEffect(() => {
     if (!meta) return;
@@ -50,12 +45,12 @@ export default function Checkout() {
   }, [meta, isPro, shipping, address.country]);
 
   if (!meta) return <Screen bar={<AppBar title="Order Print" back />}><T v="body">This puzzle is no longer on this device.</T></Screen>;
-  if (isUnder13(birthYear)) return <Screen bar={<AppBar title="Order Print" back />}><Notice icon="information-outline" body="Print ordering is not available for this profile." /></Screen>;
+  if (isUnder13(birthYear)) return <Screen bar={<AppBar title="Order Print" back />}><Notice icon="information-outline" body="Print ordering is not available on this phone." /></Screen>;
 
   const quality = printQuality(meta);
   const set = (k: keyof Address) => (v: string) => setAddress((a) => ({ ...a, [k]: v }));
   const missing = (['name', 'line1', 'city', 'region', 'postalCode', 'country'] as const).filter((k) => !address[k].trim());
-  const emailOk = claim || /^\S+@\S+\.\S+$/.test(address.email.trim());
+  const emailOk = /^\S+@\S+\.\S+$/.test(address.email.trim());
 
   const submit = async () => {
     if (missing.length || !emailOk) {
@@ -65,18 +60,11 @@ export default function Checkout() {
     setBusy(true);
     try {
       writeJson('address.v1', address);
-      if (claim) {
-        await claimGiftPrint(meta.giftToken!, address);
-        usePuzzles.getState().update(meta.id, { giftPrepaid: false });
-        notify('Your puzzle is on its way to the printer', 'We will show tracking in Orders once it ships.');
-        router.replace('/');
-        return;
-      }
       const imageUri = await preparePrintImage(meta);
-      const order = await startPrintOrder({ imageUri, pieces: meta.pieces, title: meta.title, shipping, address, boxText, giftMessage, isGift });
+      const order = await startPrintOrder({ imageUri, pieces: meta.pieces, shipping, address });
       const res = await pay(order.clientSecret, address.name);
       if (res.ok) {
-        notify('Order placed', 'Thank you. Your puzzle is being sent to the print studio.');
+        notify('Order placed', 'Thank you. Your puzzle is being sent to the printer.');
         router.replace('/orders');
       } else if (!res.cancelled) {
         notify('Payment was not completed', res.message);
@@ -96,10 +84,8 @@ export default function Checkout() {
   );
 
   return (
-    <Screen bar={<AppBar title={claim ? 'Claim Your Print' : 'Order Print'} back />} footer={
-      quality.grade === 'blocked' ? null : claim ? (
-        <Button label="Confirm Delivery Address" icon="truck-check-outline" size="lg" onPress={submit} loading={busy} />
-      ) : (
+    <Screen bar={<AppBar title="Order Print" back />} footer={
+      quality.grade === 'blocked' ? null : (
         <>
           <Button label={quote ? `Pay ${formatCents(quote.totalCents)}` : 'Pay'} icon="credit-card-outline" size="lg" onPress={submit} loading={busy} />
           <T v="small" center>Apple Pay, Google Pay and cards. Payments are processed securely by Stripe.</T>
@@ -126,22 +112,11 @@ export default function Checkout() {
           {quality.grade === 'warning' ? <Notice tone="warn" icon="alert-outline" title="Heads up on sharpness" body={`This photo prints at about ${quality.dpi} DPI at this size. It will look good from arm's length but not razor sharp.`} /> : null}
           <Notice icon="crop" body="The print uses your full original photo, centred and cropped to the puzzle's shape." />
 
-          {PRINT_PERSONALIZATION && !claim ? (
-            <Card style={{ gap: 12 }}>
-              <Row><Icon name="pencil-outline" size={18} /><T v="titleLg">Personalize</T></Row>
-              <Field label="Box title" hint={`${boxText.length}/32`} value={boxText} onChangeText={(v) => setBoxText(v.slice(0, 32))} />
-              <Field label="Gift message" value={giftMessage} onChangeText={(v) => setGiftMessage(v.slice(0, 200))} multiline />
-              <Row style={{ justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}><T v="title">This order is a gift</T><T v="small">Leave prices off the packing slip</T></View>
-                <Toggle label="This order is a gift" value={isGift} onValueChange={setIsGift} />
-              </Row>
-            </Card>
-          ) : null}
 
           <Card style={{ gap: 12 }}>
             <Row><Icon name="truck-outline" size={18} /><T v="titleLg">Shipping Address</T></Row>
             <Field label="Full name" value={address.name} onChangeText={set('name')} autoComplete="name" textContentType="name" />
-            {!claim ? <Field label="Email for receipt and tracking" value={address.email} onChangeText={set('email')} autoComplete="email" keyboardType="email-address" autoCapitalize="none" /> : null}
+            <Field label="Email for receipt and tracking" value={address.email} onChangeText={set('email')} autoComplete="email" keyboardType="email-address" autoCapitalize="none" />
             <Field label="Address line 1" value={address.line1} onChangeText={set('line1')} autoComplete="address-line1" textContentType="streetAddressLine1" />
             <Row gap={12}>
               <Field label="Apt / Suite (optional)" value={address.line2} onChangeText={set('line2')} style={{ flex: 1 }} />
@@ -154,9 +129,7 @@ export default function Checkout() {
             <Field label="Country code" hint="e.g. US, CA, GB" value={address.country} onChangeText={(v) => set('country')(v.toUpperCase().slice(0, 2))} autoCapitalize="characters" />
           </Card>
 
-          {!claim ? (
-            <>
-              <Card style={{ gap: 10 }}>
+          <Card style={{ gap: 10 }}>
                 <T v="titleLg">Delivery</T>
                 {TIERS.map((t) => {
                   const on = shipping === t.id;
@@ -176,19 +149,17 @@ export default function Checkout() {
                 <Card style={{ gap: 8 }}>
                   <Row><Icon name="receipt-text-outline" size={18} /><T v="titleLg">Order Summary</T></Row>
                   {line(`Jigsaw puzzle (${meta.pieces} pieces)`, formatCents(quote.baseCents))}
-                  {quote.discountCents ? line('Studio Pro membership (15% off)', formatCents(-quote.discountCents), false, colors.primary) : null}
+                  {quote.discountCents ? line('Pro membership (15% off)', formatCents(-quote.discountCents), false, colors.primary) : null}
                   {line('Packaging & shipping', formatCents(quote.shippingCents))}
                   {line(estimated ? 'Estimated sales tax' : 'Sales tax', formatCents(quote.taxCents))}
                   <View style={{ height: 1, backgroundColor: colors.hairline, marginVertical: 4 }} />
                   {line('Total', formatCents(quote.totalCents), true)}
                   {estimated ? <T v="small">Estimate. The final total is confirmed before you pay.</T> : null}
                 </Card>
-              ) : null}
-            </>
           ) : null}
 
           {isMinor(birthYear) ? <Notice icon="account-supervisor-outline" body="If you are under 18, you need a parent or guardian's permission to make purchases." /> : null}
-          <T v="small" center>Printed to order by our print partner. Your photo is uploaded securely for printing and deleted 30 days after delivery.</T>
+          <T v="small" center>Your address and email go to Stripe (payment) and Printify (printing and delivery) only; we keep no copy. Your photo is uploaded for printing and deleted 30 days after delivery.</T>
         </>
       )}
     </Screen>

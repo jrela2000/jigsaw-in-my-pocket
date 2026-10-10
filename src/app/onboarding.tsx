@@ -6,7 +6,7 @@ import { Button, Card, Chip, Icon, IconButton, Notice, Row, Screen, T } from '..
 import { colors, fonts, radius } from '../theme';
 import { LEGAL_NOTICE } from '../config/env';
 import { useSettings } from '../store/settings';
-import { syncProfile } from '../services/supabase';
+import { haptic } from '../lib/haptics';
 
 const ROW = 56;
 const VISIBLE = 5;
@@ -26,20 +26,22 @@ export default function Onboarding() {
   };
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.round(e.nativeEvent.contentOffset.y / ROW);
-    if (i !== index && i >= 0 && i < years.length) setIndex(i);
+    if (i !== index && i >= 0 && i < years.length) {
+      setIndex(i);
+      haptic.select();
+    }
   };
 
   const submit = () => {
     const birthYear = years[index];
     useSettings.getState().set({ birthYear, onboarded: true });
-    void syncProfile({ birth_year: birthYear });
     router.replace('/');
   };
 
   return (
     <Screen footer={
       <>
-        <Button label="Continue to Studio" iconRight="arrow-right" size="lg" onPress={submit} />
+        <Button label="Continue" iconRight="arrow-right" size="lg" onPress={submit} />
         <Row style={{ justifyContent: 'center', gap: 16, paddingTop: 4 }}>
           <Pressable onPress={() => router.push('/legal/terms')}><T v="label" style={{ textDecorationLine: 'underline' }}>Terms of Service</T></Pressable>
           <T v="small">•</T>
@@ -51,9 +53,9 @@ export default function Onboarding() {
         <View style={{ width: 60, height: 60, borderRadius: 14, backgroundColor: colors.surfaceMid, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="puzzle-outline" size={30} color={colors.primary} />
         </View>
-        <T v="overline" style={{ marginTop: 8 }}>Studio Jigsaw</T>
+        <T v="overline" style={{ marginTop: 8 }}>Jigsaw In My Pocket</T>
         <T v="display" center>Select Your Birth Year</T>
-        <T v="bodyLg" center>This allows us to tailor your curated puzzle studio catalog and preserve appropriate privacy settings.</T>
+        <T v="bodyLg" center>This sets the right ad and purchase settings for you. It stays on this phone.</T>
       </View>
 
       <Card>
@@ -96,7 +98,7 @@ export default function Onboarding() {
       </Card>
 
       <Notice icon="lock-outline" title="Stored on this device"
-        body="Your birth year is saved on your device and with your anonymous profile. It decides which ad and purchase settings apply; it is never shown publicly." />
+        body="Your birth year never leaves this phone. It only decides which ad and purchase settings apply." />
 
       <View style={{ backgroundColor: colors.surfaceLow, borderRadius: radius.md, padding: 16 }}>
         <T v="body" center style={{ fontFamily: fonts.serifItalic, fontSize: 15, lineHeight: 22 }}>“{LEGAL_NOTICE}”</T>

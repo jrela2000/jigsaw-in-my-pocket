@@ -10,7 +10,7 @@ const SKIP = /battle|war\b|death|dead|martyr|crucif|slave|execution|massacre|moc
 async function fromAIC(page: number): Promise<Art[]> {
   const url = `https://api.artic.edu/api/v1/artworks/search?limit=100&page=${page}&fields=title,artist_title,image_id,is_public_domain,thumbnail` +
     `&query[bool][must][0][term][is_public_domain]=true&query[bool][must][1][term][artwork_type_id]=1&query[bool][must][2][exists][field]=image_id`;
-  const res = await fetch(url, { headers: { 'AIC-User-Agent': 'StudioJigsaw (daily puzzle)' } });
+  const res = await fetch(url, { headers: { 'AIC-User-Agent': 'JigsawInMyPocket (daily puzzle)' } });
   if (!res.ok) return [];
   const body = await res.json();
   return (body.data ?? [])

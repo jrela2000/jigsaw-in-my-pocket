@@ -55,8 +55,8 @@ export default function Paywall() {
         <IconButton name="close" label="Close" onPress={() => router.back()} />
       </Row>
       <View style={{ alignItems: 'center', gap: 8 }}>
-        <Chip label="STUDIO EDITION" icon="star-outline" style={{ alignSelf: 'center' }} />
-        <T v="display" center>Unlock Studio Jigsaw Pro</T>
+        <Chip label="PRO MEMBERSHIP" icon="star-outline" style={{ alignSelf: 'center' }} />
+        <T v="display" center>Unlock Jigsaw In My Pocket Pro</T>
         <T v="bodyLg" center>Unhurried puzzle solving, and a discount on every print.</T>
       </View>
 

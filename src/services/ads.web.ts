@@ -9,7 +9,4 @@ export async function maybeShowInterstitial(): Promise<void> {}
 export async function openConsentOptions(): Promise<string> {
   return 'Consent options are available in the iOS and Android apps.';
 }
-export async function trackingStatus(): Promise<string> {
-  return 'Not applicable';
-}
 export const adsAvailable = false;

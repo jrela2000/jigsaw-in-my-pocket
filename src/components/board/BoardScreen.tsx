@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import { haptic } from '../../lib/haptics';
 import { useImage } from '@shopify/react-native-skia';
 import { BoardAssets, buildBoardAssets, COLOR_FAMILIES } from './assets';
 import { BoardStats, CHIPS_H, DropEvent, PuzzleBoard, PuzzleBoardHandle, TRAY_H, TrayFilter } from './PuzzleBoard';
@@ -21,7 +21,6 @@ export default function BoardScreen({ id }: { id: string }) {
   const meta = usePuzzles((s) => s.puzzles.find((p) => p.id === id));
   const update = usePuzzles((s) => s.update);
   const isPro = useIsPro();
-  const haptics = useSettings((s) => s.haptics);
   const hintsLeft = useSettings((s) => s.hintsLeft);
   const image = useImage(meta?.imageUri);
   const board = useRef<PuzzleBoardHandle>(null);
@@ -92,7 +91,7 @@ export default function BoardScreen({ id }: { id: string }) {
     const meta = metaRef.current;
     if (!meta) return;
     moves.current += 1;
-    if ((e.locked || e.merged) && haptics) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    if (e.locked || e.merged) haptic.light();
     if (saveTimer.current) clearTimeout(saveTimer.current);
     if (e.complete) {
       doneRef.current = true;
@@ -102,12 +101,12 @@ export default function BoardScreen({ id }: { id: string }) {
       const settings = useSettings.getState();
       settings.set({ completions: settings.completions + 1 });
       if (meta.dailyDate) settings.recordDaily(meta.dailyDate);
-      if (haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      haptic.success();
       setTimeout(() => router.replace(`/completed/${meta.id}`), 900);
       return;
     }
     saveTimer.current = setTimeout(() => persist(state, state.where.filter((w) => w === 2).length), 500);
-  }, [haptics, update, total, persist]);
+  }, [update, total, persist]);
 
   const pickFilter = async (next: TrayFilter) => {
     if (next.kind !== 'all' && !isPro && !sortingUnlocked) {
@@ -142,7 +141,7 @@ export default function BoardScreen({ id }: { id: string }) {
     );
   }
 
-  const texture = BOARD_TEXTURES.find((t) => t.id === meta.texture) ?? BOARD_TEXTURES[1];
+  const texture = BOARD_TEXTURES.find((t) => t.id === meta.texture) ?? BOARD_TEXTURES[3];
   const pct = total ? stats.placed / total : 0;
   const chip = (label: string, n: number, active: boolean, onPress: () => void, swatch?: string, locked?: boolean) => (
     <Pressable key={label} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}, ${n} pieces`} accessibilityState={{ selected: active }}
@@ -191,8 +190,8 @@ export default function BoardScreen({ id }: { id: string }) {
       <View style={{ flex: 1 }}>
         {assets && image ? (
           <>
-            <PuzzleBoard ref={board} assets={assets} image={image} initial={initial} background={texture.color} showReference={reference}
-              filter={filter} allowRotate={meta.rotation} onStats={setStats} onDrop={onDrop} />
+            <PuzzleBoard ref={board} assets={assets} image={image} initial={initial} background={texture.color} wood={texture.id === 'oak'} showReference={reference}
+              filter={filter} allowRotate={meta.rotation} onStats={setStats} onDrop={onDrop} onPickup={haptic.medium} />
             <View pointerEvents="box-none" style={{ position: 'absolute', left: 12, bottom: TRAY_H + CHIPS_H + 10 }}>
               <Row gap={2} style={[{ backgroundColor: colors.surface, borderRadius: radius.full, paddingLeft: 12, paddingRight: 4, height: 38 }, shadow.card]}>
                 <Icon name="hand-back-right-outline" size={15} color={colors.textSecondary} />

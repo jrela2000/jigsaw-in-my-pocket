@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { colors, fonts, radius, shadow, space, type } from '../theme';
 import { useIsPro } from '../store/entitlement';
+import { haptic } from '../lib/haptics';
 
 export type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 export const Icon = ({ name, size = 20, color = colors.text }: { name: IconName; size?: number; color?: string }) => (
@@ -62,6 +63,7 @@ export function Button({ label, icon, iconRight, kind = 'primary', size = 'md', 
       accessibilityLabel={label}
       disabled={disabled || loading}
       {...rest}
+      onPressIn={(e) => { haptic.light(); rest.onPressIn?.(e); }}
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: k.bg, height: h, paddingHorizontal: size === 'sm' ? 12 : 18, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
@@ -113,7 +115,7 @@ export function Chip({ label, tone = 'neutral', icon, style }: { label: string; 
 }
 
 export const Toggle = ({ value, onValueChange, label }: { value: boolean; onValueChange: (v: boolean) => void; label: string }) => (
-  <Switch accessibilityLabel={label} value={value} onValueChange={onValueChange} trackColor={{ false: colors.surfaceDim, true: colors.primary }} thumbColor="#fff"
+  <Switch accessibilityLabel={label} value={value} onValueChange={(v) => { haptic.select(); onValueChange(v); }} trackColor={{ false: colors.surfaceDim, true: colors.primary }} thumbColor="#fff"
     {...({ activeThumbColor: '#fff' } as object)} />
 );
 
@@ -131,7 +133,7 @@ export function Field({ label, hint, style, ...rest }: TextInputProps & { label:
 }
 
 /** Top app bar: logo + title on tab screens, back arrow on pushed screens. */
-export function AppBar({ title = 'Studio Jigsaw', back, right }: { title?: string; back?: boolean; right?: React.ReactNode }) {
+export function AppBar({ title = 'Jigsaw In My Pocket', back, right }: { title?: string; back?: boolean; right?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   const isPro = useIsPro();
   return (
