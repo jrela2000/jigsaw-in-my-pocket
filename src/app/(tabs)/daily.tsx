@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { Picture } from '../../components/Picture';
 import { AppBar, Button, Card, Chip, Icon, Row, Screen, SectionTitle, T } from '../../components/ui';
 import { colors, radius } from '../../theme';
-import { archiveDates, DailyArt, dailyPreview, getDaily } from '../../services/daily';
+import { archiveDates, DailyArt, dailyPreview, displayUrl, getDaily } from '../../services/daily';
 import { startDaily } from '../../lib/createPuzzle';
 import { currentStreak } from '../../lib/streak';
 import { useSettings } from '../../store/settings';
@@ -47,7 +47,7 @@ export default function DailyArtScreen() {
       <View><T v="overline">Daily art</T><T v="headline">Today’s Masterwork</T></View>
       <Card style={{ padding: 12, gap: 12 }}>
         <View style={{ aspectRatio: 1.3, borderRadius: radius.base, overflow: 'hidden', backgroundColor: colors.surfaceDim }}>
-          {art ? <Picture uri={art.imageUrl} style={{ flex: 1 }} label={`${art.title} by ${art.artist}`} fade /> : null}
+          {art ? <Picture uri={displayUrl(art.imageUrl)} style={{ flex: 1 }} label={`${art.title} by ${art.artist}`} fade /> : null}
           {doneToday ? <Chip label="Solved today" icon="check-circle-outline" tone="white" style={{ position: 'absolute', top: 8, right: 8 }} /> : null}
         </View>
         <View>
@@ -82,7 +82,7 @@ export default function DailyArtScreen() {
         return (
           <Pressable key={date} accessibilityRole="button" accessibilityLabel={`${a.title}, ${date}`} onPress={() => (lockedRow ? router.push('/paywall') : open(a, isPro ? pieces : 110))}>
             <Row gap={12} style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: 10, borderWidth: 1, borderColor: colors.hairline, opacity: lockedRow ? 0.6 : 1 }}>
-              <Picture uri={a.imageUrl.replace('/full/1686,', '/full/200,')} style={{ width: 64, height: 52, borderRadius: 6, backgroundColor: colors.surfaceDim }} />
+              <Picture uri={displayUrl(a.imageUrl, 200)} style={{ width: 64, height: 52, borderRadius: 6, backgroundColor: colors.surfaceDim }} />
               <View style={{ flex: 1 }}>
                 <T v="title" numberOfLines={1}>{a.title}</T>
                 <T v="small" numberOfLines={1}>{a.artist} · {date}</T>

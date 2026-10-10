@@ -58,4 +58,10 @@ export function archiveDates(days: number): string[] {
   return out;
 }
 
+/**
+ * Smaller rendition for cards and lists. The Art Institute of Chicago serves any width from the
+ * same URL pattern; other sources are returned unchanged.
+ */
+export const displayUrl = (url: string, width: 843 | 400 | 200 = 843) => url.replace('/full/1686,', `/full/${width},`);
+
 export const dailyPreview = (date: string) => readJson<DailyArt | null>(cacheKey(date), null) ?? fromBundle(date);

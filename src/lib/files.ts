@@ -28,6 +28,10 @@ export async function makeBoardImage(id: string, uri: string, srcW: number, srcH
     ch = srcH;
     cw = Math.round(srcH * aspect);
   }
+  // Web, remote image that already has the board's shape (daily art): use it as is. Re-encoding it in
+  // the browser is slow on phones and would store a megabyte of image data with the saved puzzle.
+  // (The board builder scales the image to the board, so a crop of under 2% is not worth the work.)
+  if (web && /^https?:/.test(uri) && cw >= srcW * 0.98 && ch >= srcH * 0.98) return uri;
   const result = await manipulateAsync(
     uri,
     [{ crop: { originX: Math.floor((srcW - cw) / 2), originY: Math.floor((srcH - ch) / 2), width: cw, height: ch } }, { resize: { width, height } }],

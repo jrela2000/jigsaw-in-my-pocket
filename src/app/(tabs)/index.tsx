@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, ScrollView, View } from 'react-native';
+import { Image, Platform, ScrollView, View } from 'react-native';
 import { PressableScale as Pressable } from '../../components/motion';
 import { router } from 'expo-router';
 import { Picture } from '../../components/Picture';
@@ -9,7 +9,8 @@ import { EmptyState } from '../../components/feedback';
 import { colors, radius } from '../../theme';
 import { usePuzzles, PuzzleMeta } from '../../store/puzzles';
 import { isUnder13, useSettings } from '../../store/settings';
-import { DailyArt, getDaily } from '../../services/daily';
+import { DailyArt, displayUrl, getDaily } from '../../services/daily';
+import { preloadBoard } from '../../lib/preloadBoard';
 import { currentStreak } from '../../lib/streak';
 import { startDaily } from '../../lib/createPuzzle';
 import { formatDuration, timeAgo } from '../../lib/json';
@@ -25,7 +26,14 @@ export default function Gallery() {
   const [opening, setOpening] = useState(false);
 
   useEffect(() => {
-    getDaily().then(setDaily).catch(() => {});
+    getDaily()
+      .then((art) => {
+        setDaily(art);
+        // Web: warm the full-size artwork and the puzzle engine so "Solve Today's Art" opens quickly.
+        if (Platform.OS === 'web') void Image.prefetch(art.imageUrl).catch(() => {});
+      })
+      .catch(() => {});
+    preloadBoard();
   }, []);
 
   const active = puzzles.filter((p) => !p.completedAt);
@@ -54,7 +62,7 @@ export default function Gallery() {
     <Screen bar={<AppBar />}>
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <View style={{ height: 230, backgroundColor: colors.surfaceDim }}>
-          {daily ? <Picture uri={daily.imageUrl} style={{ flex: 1 }} label={`${daily.title} by ${daily.artist}`} fade /> : null}
+          {daily ? <Picture uri={displayUrl(daily.imageUrl)} style={{ flex: 1 }} label={`${daily.title} by ${daily.artist}`} fade /> : null}
           <LinearGradientFallback />
           <Row style={{ position: 'absolute', top: 12, left: 12, right: 12, justifyContent: 'space-between' }}>
             <Chip label={streak > 0 ? `Day ${streak} Streak` : 'Start a streak'} icon="fire" tone="white" />
