@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, View } from 'react-native';
+import { Linking, Platform, View } from 'react-native';
+import { PressableScale as Pressable } from '../components/motion';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { AppBar, Button, Card, Chip, Icon, IconName, Notice, Row, Screen, T, Toggle } from '../components/ui';
@@ -122,6 +123,11 @@ export default function Settings() {
             <Icon name="vibrate" size={20} color={colors.textSecondary} />
             <View style={{ flex: 1 }}><T v="title" style={{ fontSize: 15 }}>Haptic snap feedback</T><T v="small">A subtle click when pieces lock together</T></View>
             <Toggle label="Haptic snap feedback" value={s.haptics} onValueChange={(haptics) => s.set({ haptics })} />
+          </Row>
+          <Row gap={12}>
+            <Icon name="volume-medium" size={20} color={colors.textSecondary} />
+            <View style={{ flex: 1 }}><T v="title" style={{ fontSize: 15 }}>Sounds</T><T v="small">Soft wooden clicks and a chime when you finish. Follows your silent switch.</T></View>
+            <Toggle label="Sounds" value={s.sound} onValueChange={(sound) => s.set({ sound })} />
           </Row>
           <Row gap={12} style={{ backgroundColor: colors.surface, borderRadius: radius.base, padding: 12 }}>
             <Icon name="cloud-download-outline" size={20} color={colors.textSecondary} />

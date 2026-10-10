@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { PressableScale as Pressable } from '../../components/motion';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Picture } from '../../components/Picture';
 import { AppBar, Button, Card, Chip, Field, Icon, Notice, Row, Screen, T } from '../../components/ui';

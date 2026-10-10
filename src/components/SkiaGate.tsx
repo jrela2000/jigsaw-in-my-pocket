@@ -1,10 +1,11 @@
 import React, { ComponentType, Suspense, useMemo } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { colors } from '../theme';
+import { BrandedLoader } from './feedback';
 
 export const SkiaFallback = () => (
   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-    <ActivityIndicator color={colors.primary} />
+    <BrandedLoader />
   </View>
 );
 

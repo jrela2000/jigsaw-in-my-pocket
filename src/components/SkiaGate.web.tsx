@@ -1,11 +1,12 @@
 import React, { ComponentType } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { WithSkiaWeb } from '@shopify/react-native-skia/lib/module/web';
 import { colors } from '../theme';
+import { BrandedLoader } from './feedback';
 
 export const SkiaFallback = () => (
   <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg }}>
-    <ActivityIndicator color={colors.primary} />
+    <BrandedLoader />
   </View>
 );
 

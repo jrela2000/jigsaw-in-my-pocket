@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Pressable, Text, View } from 'react-native';
+import { FlatList, NativeScrollEvent, NativeSyntheticEvent, Text, View } from 'react-native';
+import { PressableScale as Pressable } from '../components/motion';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Card, Chip, Icon, IconButton, Notice, Row, Screen, T } from '../components/ui';

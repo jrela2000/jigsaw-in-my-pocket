@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { PressableScale as Pressable } from '../components/motion';
 import { router } from 'expo-router';
 import { Picture } from '../components/Picture';
 import * as ImagePicker from 'expo-image-picker';

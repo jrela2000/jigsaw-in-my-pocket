@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { PressableScale as Pressable } from '../components/motion';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, Chip, Icon, IconButton, IconName, Logo, Row, Screen, T } from '../components/ui';

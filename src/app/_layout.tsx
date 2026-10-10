@@ -37,6 +37,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
             <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
             <Stack.Screen name="puzzle/[id]" options={{ gestureEnabled: false }} />
+            <Stack.Screen name="completed/[id]" options={{ animation: 'fade', animationDuration: 450 }} />
           </Stack>
         </PaymentsProvider>
         <StatusBar style="dark" />

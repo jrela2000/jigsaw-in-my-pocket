@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, View } from 'react-native';
+import { Platform, ScrollView, View } from 'react-native';
+import { PressableScale as Pressable } from '../../components/motion';
 import { router } from 'expo-router';
 import { Picture } from '../../components/Picture';
 import { LinearGradientFallback } from '../../components/Scrim';
 import { AppBar, Button, Card, Chip, Icon, Progress, Row, Screen, SectionTitle, T } from '../../components/ui';
+import { EmptyState } from '../../components/feedback';
 import { colors, radius } from '../../theme';
 import { usePuzzles, PuzzleMeta } from '../../store/puzzles';
 import { isUnder13, useSettings } from '../../store/settings';
@@ -96,7 +98,7 @@ export default function Gallery() {
 
       <SectionTitle title="In Progress" sub="Puzzles on your workbench" right={<T v="label">{active.length} Active</T>} />
       {active.length === 0 ? (
-        <Card tone="low"><T v="body">Nothing on the workbench yet. Pick a photo or solve today’s art to begin.</T></Card>
+        <EmptyState icon="image-multiple-outline" title="Your workbench is clear" body="Pick a photo from your phone, or solve today’s artwork, to begin." cta="New puzzle" onCta={() => router.push('/new')} />
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
           {active.map((p) => {

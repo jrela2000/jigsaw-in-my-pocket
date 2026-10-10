@@ -50,6 +50,7 @@ const config: ExpoConfig = {
     ['expo-splash-screen', { image: './assets/splash-icon.png', imageWidth: 160, backgroundColor: '#f9f9ff' }],
     'expo-image',
     'expo-sqlite',
+    ['expo-audio', { microphonePermission: false }],
     [
       'expo-image-picker',
       { photosPermission: 'Jigsaw In My Pocket needs access to your photos so you can turn them into puzzles.', cameraPermission: false, microphonePermission: false },

@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  ActivityIndicator, Pressable, PressableProps, ScrollView, StyleProp, StyleSheet, Switch, Text, TextInput, TextInputProps,
+  ActivityIndicator, PressableProps, ScrollView, StyleProp, StyleSheet, Switch, Text, TextInput, TextInputProps,
   TextProps, TextStyle, View, ViewStyle,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { colors, fonts, radius, shadow, space, type } from '../theme';
 import { useIsPro } from '../store/entitlement';
 import { haptic } from '../lib/haptics';
+import { PressableScale, Reveal } from './motion';
 
 export type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
 export const Icon = ({ name, size = 20, color = colors.text }: { name: IconName; size?: number; color?: string }) => (
@@ -58,15 +59,16 @@ export function Button({ label, icon, iconRight, kind = 'primary', size = 'md', 
   const h = size === 'lg' ? 54 : size === 'md' ? 44 : 34;
   const fs = size === 'lg' ? 17 : size === 'md' ? 15 : 13;
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
+      hitSlop={h < 44 ? Math.ceil((44 - h) / 2) : 0}
       disabled={disabled || loading}
       {...rest}
       onPressIn={(e) => { haptic.light(); rest.onPressIn?.(e); }}
-      style={({ pressed }) => [
+      style={[
         styles.button,
-        { backgroundColor: k.bg, height: h, paddingHorizontal: size === 'sm' ? 12 : 18, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 },
+        { backgroundColor: k.bg, height: h, paddingHorizontal: size === 'sm' ? 12 : 18, opacity: disabled ? 0.45 : 1 },
         k.border ? { borderWidth: 1, borderColor: k.border } : null,
         kind === 'primary' && size === 'lg' ? shadow.card : null,
         style,
@@ -80,7 +82,7 @@ export function Button({ label, icon, iconRight, kind = 'primary', size = 'md', 
           {iconRight ? <Icon name={iconRight} size={fs + 3} color={k.fg} /> : null}
         </>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -88,10 +90,10 @@ export function IconButton({ name, onPress, label, bg = colors.surfaceMid, color
   name: IconName; onPress?: () => void; label: string; bg?: string; color?: string; size?: number;
 }) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={6}
-      style={({ pressed }) => ({ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}>
+    <PressableScale accessibilityRole="button" accessibilityLabel={label} onPress={onPress} hitSlop={Math.max(6, Math.ceil((44 - size) / 2))} pressedScale={0.92}
+      style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
       <Icon name={name} size={size * 0.5} color={color} />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -147,18 +149,20 @@ export function AppBar({ title = 'Jigsaw In My Pocket', back, right }: { title?:
   );
 }
 
-export function Screen({ children, bar, footer, scroll = true, pad = true }: {
-  children: React.ReactNode; bar?: React.ReactNode; footer?: React.ReactNode; scroll?: boolean; pad?: boolean;
+export function Screen({ children, bar, footer, scroll = true, pad = true, stagger = true }: {
+  children: React.ReactNode; bar?: React.ReactNode; footer?: React.ReactNode; scroll?: boolean; pad?: boolean; stagger?: boolean;
 }) {
   const insets = useSafeAreaInsets();
+  // Each top-level block fades in 140ms after the one before it (first six only; the rest arrive with the last).
+  const staged = !stagger ? children : React.Children.toArray(children).map((c, i) => <Reveal key={(c as React.ReactElement).key ?? i} index={i}>{c}</Reveal>);
   const body = { paddingHorizontal: pad ? space.margin : 0, paddingBottom: 28, gap: space.md, width: '100%' as const, maxWidth: 560, alignSelf: 'center' as const };
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       {bar}
       {scroll ? (
-        <ScrollView contentContainerStyle={body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>{children}</ScrollView>
+        <ScrollView contentContainerStyle={body} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>{staged}</ScrollView>
       ) : (
-        <View style={[body, { flex: 1 }]}>{children}</View>
+        <View style={[body, { flex: 1 }]}>{staged}</View>
       )}
       {footer ? <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>{footer}</View> : null}
     </View>

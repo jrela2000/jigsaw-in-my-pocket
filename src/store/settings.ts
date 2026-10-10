@@ -8,6 +8,7 @@ type Persisted = {
   onboarded: boolean;
   birthYear: number | null;
   haptics: boolean;
+  sound: boolean;
   reminders: boolean;
   reminderOffered: boolean;
   streak: Streak;
@@ -21,7 +22,7 @@ type Persisted = {
 };
 
 const DEFAULTS: Persisted = {
-  onboarded: false, birthYear: null, haptics: true, reminders: false, reminderOffered: false,
+  onboarded: false, birthYear: null, haptics: true, sound: true, reminders: false, reminderOffered: false,
   streak: EMPTY_STREAK, hintsLeft: FREE_HINTS, completions: 0, completionsAtLastAd: 0, lastAdAt: 0,
   texture: 'oak', demoPro: false,
 };
